@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            display: none;
+            word-break: break-all;
+        }
+
+        .result-box.success {
+            border-left-color: #28a745;
+            background: #f0f8f4;
+        }
+
+        .result-box.error {
+            border-left-color: #dc3545;
+            background: #fef5f5;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .result-content {
+            color: #666;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .token-info {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .token-info.show {
+            display: block;
+        }
+
+        .token-label {
+            font-weight: 600;
+            color: #1976D2;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .token-value {
+            color: #555;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            background: white;
+            padding: 8px;
+            border-radius: 3px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .user-info {
+            background: #f0f7ff;
+            border: 2px solid #667eea;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+            margin-top: 20px;
+        }
+
+        .user-info.show {
+            display: block;
+        }
+
+        .user-greeting {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .user-message {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔐 OAuth Login</h1>
+
+    <!-- Login Section -->
+    <div class="login-section">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input
+                    type="text"
+                    id="username"
+                    placeholder="Enter username (e.g., testuser1)"
+                    value="testuser1"
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input
+                    type="password"
+                    id="password"
+                    placeholder="Enter password (e.g., test1)"
+                    value="test1"
+            >
+        </div>
+
+        <button onclick="login()">Login</button>
+        <div class="loading" id="loginLoading">
+            <div class="spinner"></div>
+            <p>Authenticating...</p>
+        </div>
+
+        <!-- Token Display -->
+        <div class="token-info" id="tokenInfo">
+            <div class="token-label">✅ Access Token Received:</div>
+            <div class="token-value" id="tokenValue"></div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="result-box error" id="loginError" style="display: none;">
+            <div class="result-title">❌ Login Failed</div>
+            <div class="result-content" id="loginErrorMsg"></div>
+        </div>
+    </div>
+
+    <!-- Hello Section -->
+    <div class="section" id="helloSection" style="display: none;">
+        <h2 style="color: #333; margin-bottom: 20px; font-size: 20px;">Welcome!</h2>
+        <button onclick="callHello()">Call /hello Endpoint</button>
+
+        <div class="loading" id="helloLoading">
+            <div class="spinner"></div>
+            <p>Fetching...</p>
+        </div>
+
+        <!-- User Info Display -->
+        <div class="user-info" id="userInfo">
+            <div class="user-greeting" id="greeting"></div>
+            <div class="user-message">Successfully authenticated with Keycloak</div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="result-box error" id="helloError" style="display: none;">
+            <div class="result-title">❌ Error</div>
+            <div class="result-content" id="helloErrorMsg"></div>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<script>
+    let accessToken = null;
+
+    async function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) {
+            showLoginError('Please enter username and password');
+            return;
+        }
+
+        showLoginLoading(true);
+        document.getElementById('loginError').style.display = 'none';
+
+        try {
+            const response = await fetch(`/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                showLoginError(data.error);
+            } else if (data.access_token) {
+                accessToken = data.access_token;
+                showLoginSuccess(data);
+            } else {
+                showLoginError('Unexpected response from server');
+            }
+        } catch (error) {
+            showLoginError(error.message);
+        } finally {
+            showLoginLoading(false);
+        }
+    }
+
+    function showLoginSuccess(data) {
+        document.getElementById('tokenValue').textContent = data.access_token;
+        document.getElementById('tokenInfo').classList.add('show');
+        document.getElementById('helloSection').style.display = 'block';
+        document.querySelector('.login-section').style.opacity = '0.6';
+        document.querySelector('.login-section').style.pointerEvents = 'none';
+    }
+
+    function showLoginError(message) {
+        document.getElementById('loginErrorMsg').textContent = message;
+        document.getElementById('loginError').style.display = 'block';
+    }
+
+    function showLoginLoading(show) {
+        document.getElementById('loginLoading').style.display = show ? 'block' : 'none';
+    }
+
+    async function callHello() {
+        if (!accessToken) {
+            showHelloError('No access token available');
+            return;
+        }
+
+        showHelloLoading(true);
+        document.getElementById('helloError').style.display = 'none';
+        document.getElementById('userInfo').classList.remove('show');
+
+        try {
+            const response = await fetch('/hello', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();  // Parse as JSON now
+                document.getElementById('greeting').textContent = data.message;
+                document.getElementById('userInfo').classList.add('show');
+            } else {
+                const errorData = await response.json();
+                showHelloError(errorData.error || `Server returned status ${response.status}`);
+            }
+        } catch (error) {
+            showHelloError(error.message);
+        } finally {
+            showHelloLoading(false);
+        }
+    }
+
+    function showHelloError(message) {
+        document.getElementById('helloErrorMsg').textContent = message;
+        document.getElementById('helloError').style.display = 'block';
+    }
+
+    function showHelloLoading(show) {
+        document.getElementById('helloLoading').style.display = show ? 'block' : 'none';
+    }
+
+    function logout() {
+        accessToken = null;
+        document.getElementById('username').value = 'testuser1';
+        document.getElementById('password').value = 'test1';
+        document.getElementById('tokenInfo').classList.remove('show');
+        document.getElementById('helloSection').style.display = 'none';
+        document.querySelector('.login-section').style.opacity = '1';
+        document.querySelector('.login-section').style.pointerEvents = 'auto';
+        document.getElementById('loginError').style.display = 'none';
+        document.getElementById('helloError').style.display = 'none';
+        document.getElementById('userInfo').classList.remove('show');
+    }
+
+    // Pre-fill with test credentials
+    window.addEventListener('load', () => {
+        document.getElementById('username').value = 'testuser1';
+        document.getElementById('password').value = 'test1';
+    });
+</script>
+</body>
+</html>
