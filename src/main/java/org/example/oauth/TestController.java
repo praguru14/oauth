@@ -1,87 +1,107 @@
 package org.example.oauth;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
-import jakarta.servlet.http.HttpServletRequest;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class TestController {
 
-    @Autowired
-    private RestTemplate restTemplate;
+    // Public page
+    @GetMapping("/")
+    public String home() {
 
-    @Autowired
-    private JwtDecoder jwtDecoder;
+        return """
+                <html>
 
-    @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestParam String username, @RequestParam String password) {
-        try {
-            String keycloakTokenUrl = "http://localhost:8080/realms/myrealm/protocol/openid-connect/token";
+                <body>
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+                    <h1>OAuth Demo</h1>
 
-            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-            body.add("grant_type", "password");
-            body.add("client_id", "spring-client");
-            body.add("client_secret", "xtIel7HlpXv22OQ8XYb7GUpMmEP3NyDQ");
-            body.add("username", username);
-            body.add("password", password);
+                    <a href='/dashboard'>
+                        Login with Keycloak
+                    </a>
 
-            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+                </body>
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(keycloakTokenUrl, request, Map.class);
-
-            return ResponseEntity.ok(response.getBody());
-
-        } catch (RestClientException e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", "Authentication failed: " + e.getMessage());
-            return ResponseEntity.status(401).body(error);
-        } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", "Unexpected error: " + e.getMessage());
-            return ResponseEntity.status(500).body(error);
-        }
+                </html>
+                """;
     }
 
-    @GetMapping("/hello")
-    public ResponseEntity<Map<String, Object>> hello(HttpServletRequest request) {
-        try {
-            String authHeader = request.getHeader("Authorization");
+    // Protected page
+    @GetMapping("/dashboard")
+    public String dashboard(
+            @AuthenticationPrincipal OAuth2User user
+    ) {
 
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(401).body(Map.of("error", "Missing or invalid Authorization header"));
-            }
+        String username =
+                user.getAttribute("preferred_username");
 
-            String token = authHeader.substring("Bearer ".length());
+        return """
+                <html>
 
-            Jwt jwt = jwtDecoder.decode(token);
+                <body>
 
-            String username = jwt.getClaimAsString("preferred_username");
+                    <h1>You are authenticated</h1>
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Hello " + username);
-            response.put("username", username);
-            response.put("token_issuer", jwt.getIssuer());
+                    <h2>Welcome %s</h2>
 
-            return ResponseEntity.ok(response);
+                    <br>
 
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid token: " + e.getMessage()));
-        }
+                    <button onclick="loadApi('/api1')">
+                        Load API 1
+                    </button>
+
+                    <button onclick="loadApi('/api2')">
+                        Load API 2
+                    </button>
+
+                    <button onclick="loadApi('/api3')">
+                        Load API 3
+                    </button>
+
+                    <br><br>
+
+                    <pre id='result'></pre>
+
+                    <script>
+
+                        async function loadApi(url) {
+
+                            const response =
+                                await fetch(url);
+
+                            const text =
+                                await response.text();
+
+                            document.getElementById('result')
+                                .innerText = text;
+                        }
+
+                    </script>
+
+                </body>
+
+                </html>
+                """.formatted(username);
+    }
+
+    @GetMapping("/api1")
+    public String api1() {
+
+        return "Protected API 1 called successfully";
+    }
+
+    @GetMapping("/api2")
+    public String api2() {
+
+        return "Protected API 2 called successfully";
+    }
+
+    @GetMapping("/api3")
+    public String api3() {
+
+        return "Protected API 3 called successfully";
     }
 }

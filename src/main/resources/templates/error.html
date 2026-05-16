@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #dc3545;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .error-message {
+            background: #fef5f5;
+            border: 2px solid #dc3545;
+            padding: 20px;
+            border-radius: 5px;
+            color: #dc3545;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>❌ Access Denied</h1>
+
+    <div class="error-message" th:text="${message}"></div>
+
+    <div class="user-info">
+        <p>You are logged in as: <strong th:text="${username}"></strong></p>
+        <p>But you don't have the required Admin role.</p>
+    </div>
+
+    <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+    function logout() {
+        window.location.href = '/logout';
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth2 Protected Area</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .user-info {
+            background: #f0f7ff;
+            border: 2px solid #667eea;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .user-greeting {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .user-message {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .user-details {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: left;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .user-details p {
+            margin: 8px 0;
+        }
+
+        .role-badge {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 3px 5px 3px 0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .logout-btn {
+            background: #dc3545;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .hello-response {
+            background: #f0f7ff;
+            border: 2px solid #28a745;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .hello-response.show {
+            display: block;
+        }
+
+        .hello-message {
+            font-size: 18px;
+            color: #28a745;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-box {
+            background: #fef5f5;
+            border: 2px solid #dc3545;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 20px;
+            color: #dc3545;
+            display: none;
+        }
+
+        .error-box.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔐 Protected Area</h1>
+
+    <div class="user-info">
+        <div class="user-greeting">Hello, <span th:text="${username}"></span>! 👑</div>
+        <div class="user-message">✅ Successfully authenticated with Admin role</div>
+
+        <div class="user-details">
+            <p><strong>Email:</strong> <span th:text="${email}"></span></p>
+            <p>
+                <strong>Roles:</strong><br>
+                <span th:each="role : ${roles}">
+                    <span class="role-badge" th:text="${role}"></span>
+                </span>
+            </p>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Calling /hello endpoint...</p>
+    </div>
+
+    <div class="hello-response" id="helloResponse">
+        <div class="hello-message" id="helloMessage"></div>
+        <div class="user-message">✅ /hello endpoint access granted!</div>
+    </div>
+
+    <div class="error-box" id="errorBox">
+        <strong>❌ Error:</strong> <span id="errorMessage"></span>
+    </div>
+
+    <div class="button-group">
+        <button onclick="callHello()">Call /hello Endpoint</button>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<script>
+    function callHello() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('helloResponse').classList.remove('show');
+        document.getElementById('errorBox').classList.remove('show');
+
+        fetch('/hello')
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Access denied or server error');
+                }
+            })
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('helloMessage').textContent = data.message;
+                document.getElementById('helloResponse').classList.add('show');
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('errorMessage').textContent = error.message;
+                document.getElementById('errorBox').classList.add('show');
+            });
+    }
+
+    function logout() {
+        // Redirect to logout endpoint
+        window.location.href = '/logout';
+    }
+</script>
+</body>
+</html>
