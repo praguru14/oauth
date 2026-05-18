@@ -1,6 +1,9 @@
 package org.example.oauth;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,11 +35,15 @@ public class TestController {
     // Protected page
     @GetMapping("/dashboard")
     public String dashboard(
-            @AuthenticationPrincipal OAuth2User user
-    ) {
 
-        String username =
-                user.getAttribute("preferred_username");
+    ) {
+final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object username =
+                authentication.getPrincipal();
+
+        OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+
+        String user = oidcUser.getAttribute("preferred_username");
 
         return """
                 <html>
@@ -84,7 +91,7 @@ public class TestController {
                 </body>
 
                 </html>
-                """.formatted(username);
+                """.formatted(user);
     }
 
     @GetMapping("/api1")
