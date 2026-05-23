@@ -34,3 +34,14 @@ jobs:
       - name: Build Project
         run: ./mvnw clean install -DskipTests
 
+      - name: Create Release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}-${{ github.run_number }}
+          name: Release ${{ github.ref_name }}-${{ github.run_number }}
+          files: target/oauth-*.jar
+          draft: false
+          prerelease: ${{ github.ref == 'refs/heads/develop' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
