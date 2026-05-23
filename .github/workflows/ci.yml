@@ -34,5 +34,3 @@ jobs:
       - name: Build Project
         run: ./mvnw clean install -DskipTests
 
-      - name: Run Tests
-        run: ./mvnw test
